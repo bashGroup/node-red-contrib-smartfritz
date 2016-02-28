@@ -1,7 +1,9 @@
 var fritz = require('smartfritz')
 var retObject = {
-    Sid: "0",
-    ListInfos: "0"
+    Sid : "0",
+    ListInfos : "0",
+    SwitchEnergy : "0",
+    SwitchOnOff : "0"
 };
 
 module.exports = function (RED) {
@@ -21,15 +23,30 @@ module.exports = function (RED) {
                     var listinfos;
                     fritz.getSwitchList(sid,function(listinfos){
 
-                            node.log("Fritz!Session ID: "+ sid);
-                            retObject.Sid = sid;
+                        var SwitchEnergy;
+                        fritz.getSwitchEnergy(sid, listinfos, function(SwitchEnergy){
 
-                            node.log("Switches AIDs: " + listinfos);
-                            retObject.ListInfos = listinfos;
+                            var SwitchOnOff;
+                            fritz.setSwitchOff(sid, listinfos, function(SwitchOnOff){
 
-                            msg.payload = retObject;
 
-                            node.send(msg);
+                                node.log("Fritz!Session ID: "+ sid);
+                                retObject.Sid = sid;
+
+                                node.log("Switches AIDs: " + listinfos);
+                                retObject.ListInfos = listinfos;
+
+                                node.log("SwitchEnergy: " + SwitchEnergy);
+                                retObject.SwitchEnergy = SwitchEnergy;
+
+                                node.log("SwitchOnOff: " + SwitchOnOff);
+                                retObject.SwitchOnOff = SwitchOnOff;
+
+                                msg.payload = retObject;
+
+                                node.send(msg);
+                            });
+                        });
                     });
                 });
 
