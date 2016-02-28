@@ -1,37 +1,90 @@
 <script type="text/javascript">
-  RED.nodes.registerType("smartfritz", {
+  RED.nodes.registerType("fritz write", {
     category: "function",
-    color: "#83B3B3",
+    color: "#268edf",
     defaults: {
       name: {value:"", required: false},
       fritzip: {value:"192.168.178.1", required: true},
-      username: {value:"admin", required: true},
-      password: {value:"", required: true}
+      username: {value:"admin", required: false},
+      password: {value:"", required: true},
+      aid : {value:"0", required: false},
+      switchstate : {value:"NaN", required:true}
     },
     inputs:1,
     outputs:1,
     icon: "smartfritz.png",
     label: function() {
-      return this.name ? this.name : "smartfritz node";
+      return this.name ? this.name : "fritz write";
     }
   });
 </script>
 
-<script type="text/x-red" data-template-name="smartfritz">
+<script type="text/javascript">
+  RED.nodes.registerType("fritz read", {
+    category: "function",
+    color: "#268edf",
+    defaults: {
+      name: {value:"", required: false},
+      fritzip: {value:"192.168.178.1", required: true},
+      username: {value:"admin", required: false},
+      password: {value:"", required: true},
+      aid : {value:"0", required: false}
+    },
+    inputs:1,
+    outputs:1,
+    icon: "smartfritz.png",
+    label: function() {
+      return this.name ? this.name : "fritz read";
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="fritz write">
     <div class="form-row">
         <label for="node-input-name"><i class="icon-bookmark"></i>Name</label>
         <input type="text" id="node-input-name" />
     </div>
     <div class="form-row">
-        <label for="node-input-fritzip"><i class="icon-bookmark"></i>Fritz!Box IP</label>
-        <input type="text" id="node-input-fritzip" />
+        <label for="node-input-fritzip"><i class="icon-bookmark"></i>IP</label>
+        <input type="text" id="node-input-fritzip"/>
     </div>
     <div class="form-row">
-        <label for="node-input-username"><i class="icon-bookmark"></i>Username</label>
-        <input type="text" id="node-input-username" />
+        <label for="node-input-username"><i class="icon-bookmark"></i>User (opt.)</label>
+        <input type="text" id="node-input-username"/>
     </div>
     <div class="form-row">
-        <label for="node-input-password"><i class="icon-bookmark"></i>Password</label>
+        <label for="node-input-password"><i class="icon-bookmark"></i>Pass</label>
         <input type="password" id="node-input-password" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-aid"><i class="icon-bookmark"></i>AID (opt.)</label>
+        <input type="text" id="node-input-aid"/>
+    </div>
+    <div class="form-row">
+        <label for="node-input-switchstate"><i class="icon-bookmark"></i>SwitchState (opt.)</label>
+        <input type="text" id="node-input-switchstate"/>
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="fritz read">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-bookmark"></i>Name</label>
+        <input type="text" id="node-input-name" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-fritzip"><i class="icon-bookmark"></i>IP</label>
+        <input type="text" id="node-input-fritzip"/>
+    </div>
+    <div class="form-row">
+        <label for="node-input-username"><i class="icon-bookmark"></i>User (opt.)</label>
+        <input type="text" id="node-input-username"/>
+    </div>
+    <div class="form-row">
+        <label for="node-input-password"><i class="icon-bookmark"></i>Pass</label>
+        <input type="password" id="node-input-password" />
+    </div>
+    <div class="form-row">
+        <label for="node-input-aid"><i class="icon-bookmark"></i>AID (opt.)</label>
+        <input type="text" id="node-input-aid"/>
     </div>
 </script>
