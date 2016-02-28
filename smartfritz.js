@@ -1,8 +1,8 @@
 var fritz = require('smartfritz')
-var retObject = {Sid:"0", Calls:"0",ListInfos:"0"};
-var sid;
-var calls;
-var listinfos;
+var retObject = {
+    Sid: "0",
+    ListInfos: "0"
+};
 
 module.exports = function (RED) {
   function SmartFritzNode (n) {
@@ -15,31 +15,30 @@ module.exports = function (RED) {
 		node.on('input', function(msg) {
             try {
                 // AB HIER NEBENLAEUFIGKEITEN!!!
+                var sid;
                 fritz.getSessionID(node.username, node.password, function(sid)
                 {
-                    console.log("SID =" + sid);
-                    retObject.Sid = sid;
+                    var listinfos;
+                    fritz.getSwitchList(sid,function(listinfos){
+
+                            node.log("Fritz!Session ID: "+ sid);
+                            retObject.Sid = sid;
+
+                            node.log("Switches AIDs: " + listinfos);
+                            retObject.ListInfos = listinfos;
+
+                            msg.payload = retObject;
+
+                            node.send(msg);
+                    });
                 });
 
-                console.log("Fritz!Session ID: "+ sid);
-                fritz.getSwitchList(sid,function(listinfos){
-                    retObject.ListInfos = listinfos;
-                    console.log("Switches AIDs: "+listinfos);
-                });
 
-                fritz.getPhoneList(sid,function(calls){
-                    retObject.Calls = calls;
-                    console.log("Phone List: " + calls);
-                });
+
             } catch (e) {
-                console.log("Error!!")
-                console.log(e);
-            } finally {
-                msg.payload = retObject;
-                node.send(msg);
+                node.log("Error!!")
+                node.log(e);
             }
-
-
         });
 
 
