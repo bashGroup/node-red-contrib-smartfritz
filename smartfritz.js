@@ -1,45 +1,57 @@
-var fritz = require('smartfritz')
-var retObject = {
-  SID: 'NaN',
-  AID: 'NaN',
-  SwitchEnergy: 'NaN',
-  SwitchPower: 'NaN',
-  SwitchState: 'NaN'
-}
+
+var fritz = require('smartfritz');
 
 module.exports = function (RED) {
+
+  	function SmartfritzConfigNode(n) {
+  		RED.nodes.createNode(this,n);
+  		var node = this;
+  	}
+  	RED.nodes.registerType("smartfritz-config", SmartfritzConfigNode, {
+  		credentials: {
+  			username: {type: "text"},
+  			password: {type: "password"}
+  		}
+  	});
+
+
+  /* ---------------------------------------------------------------------------
+   * WRITE node
+   * -------------------------------------------------------------------------*/
   function FritzWriteNode (n) {
     RED.nodes.createNode(this, n)
-    var node = this
-    node.fritzip = n.fritzip
-    node.username = n.username
-    node.password = n.password
-    node.aid = n.aid
-    node.switchstate = n.switchstate
+
+    var node = this;
+    node.config = RED.nodes.getNode(n.config);
+    if(!node.config) {
+      node.error("Config node missing");
+      node.status({fill:"red",shape:"ring",text:"Error: Config node missing"});
+      return;
+    }
 
     node.on('input', function (msg) {
       try {
-        var moreParam = { url: node.fritzip }
-        fritz.getSessionID(node.username, node.password, function (tempSID) {
-          node.log('IP: ' + node.fritzip)
-          node.log('Username: ' + node.username)
-          node.log('Password: ' + node.password)
-          node.log('tempSID: ' + tempSID)
+        var moreParam = { url: node.config.fritzip }
+        fritz.getSessionID(node.config.credentials.username, node.config.credentials.password, function (tempSID) {
+          node.log('IP: ' + node.config.fritzip);
+          node.log('Username: ' + node.config.credentials.username);
+          node.log('Password: ' + node.config.credentials.password);
+          node.log('tempSID: ' + tempSID);
 
           if (tempSID === 0) {
-            node.error('Error logging in to Fritz IP: ' + node.fritzip + '. \nWrong password?')
+            node.error('Error logging in to Fritz IP: ' + node.config.fritzip + '. \nWrong password?');
           }
 
             // Get Lists of Switches (AID-List)
           fritz.getSwitchList(tempSID, function (tempAID) {
             if (node.aid !== '0') {
-              tempAID = node.aid
+              tempAID = node.aid;
             }
             var tempSwitchState = node.switchstate
             if(tempSwitchState === 'NaN' || 'msg.payload')
             {
-              node.log('Will take msg.payload as SwitchState')
-              tempSwitchState = msg.payload
+              node.log('Will take msg.payload as SwitchState');
+              tempSwitchState = msg.payload;
             }
 
             switch (tempSwitchState) {
@@ -48,20 +60,15 @@ module.exports = function (RED) {
                   node.log('SwitchOn Switch AID: ' + tempAID)
                   fritz.setSwitchOn(tempSID, tempAID, function (funRet) {
                     if (funRet === '') {
-                      node.error('Error writing SwitchOn. Switch-ID (AID):' + tempAID)
+                      node.error('Error writing SwitchOn. Switch-ID (AID):' + tempAID);
                     }
-                    node.log('Fritz!Session ID: ' + tempSID)
-                    retObject.SID = tempSID
 
-                    node.log('Switches AIDs: ' + tempAID)
-                    node.log('Info node.aid:' + node.aid)
-                    retObject.AID = tempAID
-
-                    node.log('SwitchState: ' + funRet)
-                    retObject.SwitchState = funRet
-
-                    msg.payload = retObject
-                    node.send(msg)
+                    msg.payload = {
+                      switchState: funRet,
+                      switchId: tempAID,
+                      sessionId: tempSID
+                    };
+                    node.send(msg);
                   })
                 }
                 break;
@@ -71,19 +78,13 @@ module.exports = function (RED) {
                     if (funRet === '') {
                       node.error('Error writing SwitchOff. Switch-ID (AID):' + tempAID)
                     }
-                    node.log('SwitchOff Switch AID: ' + tempAID)
-                    node.log('Fritz!Session ID: ' + tempSID)
-                    retObject.SID = tempSID
 
-                    node.log('Switches AIDs: ' + tempAID)
-                    node.log('Info node.aid:' + node.aid)
-                    retObject.AID = tempAID
-
-                    node.log('SwitchState: ' + funRet)
-                    retObject.SwitchState = funRet
-
-                    msg.payload = retObject
-                    node.send(msg)
+                    msg.payload = {
+                      switchState: funRet,
+                      switchId: tempAID,
+                      sessionId: tempSID
+                    };
+                    node.send(msg);
                   })
                 }
                 break;
@@ -92,77 +93,85 @@ module.exports = function (RED) {
             }
           })
         }, moreParam)
-      } catch (e) {
-        node.log('Error!!')
-        node.log(e)
+      } catch (err) {
+        node.error('Error: ' + err);
       }
-    })
+    });
   }
 
-  RED.nodes.registerType('fritz write', FritzWriteNode)
+  RED.nodes.registerType('fritz write', FritzWriteNode);
 
+
+  /* ---------------------------------------------------------------------------
+	 * READ node
+	 * -------------------------------------------------------------------------*/
   function FritzReadNode (n) {
     RED.nodes.createNode(this, n)
-    var node = this
-    node.fritzip = n.fritzip
-    node.username = n.username
-    node.password = n.password
-    node.aid = n.aid
-    node.switchstate = n.switchstate
+    var node = this;
+
+    node.config = RED.nodes.getNode(n.config);
+    if(!node.config) {
+			node.error("Config node missing");
+			node.status({fill:"red",shape:"ring",text:"Error: Config node missing"});
+			return;
+		}
+
+//    node.fritzip
+  //  node.username = n.config.credentials.username;
+  //  node.password = n.config.credentials.password;
+//    node.log("TestTTT ip: " + node.config.fritzip);
+//    node.log('Username: ' + n.config.credentials.username);
+//    node.log('Password: ' + node.password);
+    node.log('Config-Node:' + JSON.stringify(node.config));
+//    node.aid = n.aid;
+//    node.switchstate = n.switchstate;
+
 
     node.on('input', function (msg) {
       try {
-        var moreParam = { url: node.fritzip }
-        fritz.getSessionID(node.username, node.password, function (tempSID) {
-          node.log('IP: ' + node.fritzip)
-          node.log('Username: ' + node.username)
-          node.log('Password: ' + node.password)
-          node.log('tempSID: ' + tempSID)
+        node.log('Config-Node at read input:' + JSON.stringify(node.config));
+
+        var moreParam = { url: node.config.fritzip }
+        node.log('IP: ' + node.config.fritzip);
+        //node.log('Username: ' + node.config.credentials.username);
+        //node.log('Password: ' + node.config.credentials.password);
+        fritz.getSessionID(node.config.credentials.username, node.config.credentials.password, function (tempSID) {
+          node.log('tempSID: ' + tempSID);
 
           if (tempSID === 0) {
-            node.error('Error logging in to Fritz IP: ' + node.fritzip + '. \nWrong password?')
+            node.error('Error logging in to Fritz IP: ' + node.config.fritzip + '. \nWrong password?')
           }
 
             // Get Lists of Switches (AID-List)
           fritz.getSwitchList(tempSID, function (tempAID) {
             if (node.aid !== '0') {
-              tempAID = node.aid
+              tempAID = node.aid;
             }
 
-            fritz.getSwitchEnergy(tempSID, tempAID, function (SwitchEnergy) {
+            fritz.getSwitchEnergy(tempSID, tempAID, function (switchEnergy) {
 
-              fritz.getSwitchPower(tempSID, tempAID, function (SwitchPower) {
+              fritz.getSwitchPower(tempSID, tempAID, function (switchPower) {
 
-                fritz.getSwitchState(tempSID, tempAID, function (SwitchState) {
+                fritz.getSwitchState(tempSID, tempAID, function (switchState) {
 
-                  node.log('SID: ' + tempSID)
-                  retObject.SID = tempSID
+                  msg.payload = {
+                    switchEnergy: switchEnergy,
+                    switchPower: switchPower,
+                    switchState: switchState
+                  };
 
-                  node.log('AID: ' + tempAID)
-                  retObject.AID = tempAID
-
-                  node.log('SwitchEnergy: ' + SwitchEnergy)
-                  retObject.SwitchEnergy = SwitchEnergy
-
-                  node.log('SwitchPower: ' + SwitchPower)
-                  retObject.SwitchPower = SwitchPower
-
-                  node.log('SwitchState: ' + SwitchState)
-                  retObject.SwitchState = SwitchState
-
-                  msg.payload = retObject
-                  node.send(msg)
+                  node.log('Sending ' + JSON.stringify(msg.payload));
+                  node.send(msg);
                 })
               })
             })
           })
         }, moreParam)
-      } catch (e) {
-        node.log('Error!!')
-        node.log(e)
+      } catch (err) {
+        node.error('Error: ' +  err);
       }
     })
   }
 
-  RED.nodes.registerType('fritz read', FritzReadNode)
+  RED.nodes.registerType('fritz read', FritzReadNode);
 }
