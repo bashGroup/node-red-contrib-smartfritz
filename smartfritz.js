@@ -109,6 +109,10 @@ module.exports = function (RED) {
                 node.error('Error interpreting SwitchState: ' + tempSwitchState);
             }
           })
+<<<<<<< HEAD
+=======
+        }, moreParam)
+>>>>>>> 2eb29a9bc6868811bd0aeeba801c0e230e04873e
       } catch (err) {
         node.error('Error: ' + err);
       }
