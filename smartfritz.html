@@ -1,12 +1,53 @@
 <script type="text/javascript">
+  RED.nodes.registerType("smartfritz-config", {
+    category: "config",
+    defaults: {
+      name: {value:"", required: false},
+      debug: {value:false, required: true},
+      fritzip: {value:"111.111.111.111", required: true}
+    },
+    credentials: {
+      username: {type: "text"},
+      password: {type: "password"}
+    },
+    label: function() {
+      // ist das hier so in Ordnung?????
+      return this.name ? this.name : "Smartfritz Config";
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="smartfritz-config">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="icon-bookmark"></i>Name</label>
+        <input type="text" id="node-config-input-name" />
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-fritzip"><i class="icon-bookmark"></i>IP</label>
+        <input type="text" id="node-config-input-fritzip" />
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-username"><i class="icon-bookmark"></i>Username</label>
+        <input type="text" id="node-config-input-username" />
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password"><i class="icon-bookmark"></i>Password</label>
+        <input type="password" id="node-config-input-password" />
+    </div>
+    <div class="form-row">
+      <label>&nbsp;</label>
+      <input type="checkbox" id="node-config-input-debug" placeholder="" style="display: inline-block; width: auto; vertical-align: top;">
+      <label for="node-config-input-debug" style="width: 70%;">Debug mode</label>
+    </div>
+</script>
+
+<script type="text/javascript">
   RED.nodes.registerType("fritz write", {
     category: "function",
     color: "#268edf",
     defaults: {
+      config: {type:"smartfritz-config", required:true},
       name: {value:"", required: false},
-      fritzip: {value:"192.168.178.1", required: true},
-      username: {value:"admin", required: false},
-      password: {value:"", required: true},
       aid : {value:"0", required: false},
       switchstate : {value:"NaN", required:true}
     },
@@ -24,10 +65,8 @@
     category: "function",
     color: "#268edf",
     defaults: {
+      config: {type:"smartfritz-config", required:true},
       name: {value:"", required: false},
-      fritzip: {value:"192.168.178.1", required: true},
-      username: {value:"admin", required: false},
-      password: {value:"", required: true},
       aid : {value:"0", required: false}
     },
     inputs:1,
@@ -41,20 +80,12 @@
 
 <script type="text/x-red" data-template-name="fritz write">
     <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-user"></i>Config</label>
+        <input type="text" id="node-input-config">
+    </div>
+    <div class="form-row">
         <label for="node-input-name"><i class="icon-bookmark"></i>Name</label>
         <input type="text" id="node-input-name" />
-    </div>
-    <div class="form-row">
-        <label for="node-input-fritzip"><i class="icon-bookmark"></i>IP</label>
-        <input type="text" id="node-input-fritzip"/>
-    </div>
-    <div class="form-row">
-        <label for="node-input-username"><i class="icon-bookmark"></i>User (opt.)</label>
-        <input type="text" id="node-input-username"/>
-    </div>
-    <div class="form-row">
-        <label for="node-input-password"><i class="icon-bookmark"></i>Pass</label>
-        <input type="password" id="node-input-password" />
     </div>
     <div class="form-row">
         <label for="node-input-aid"><i class="icon-bookmark"></i>AID (opt.)</label>
@@ -68,20 +99,12 @@
 
 <script type="text/x-red" data-template-name="fritz read">
     <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-user"></i>Config</label>
+        <input type="text" id="node-input-config">
+    </div>
+    <div class="form-row">
         <label for="node-input-name"><i class="icon-bookmark"></i>Name</label>
         <input type="text" id="node-input-name" />
-    </div>
-    <div class="form-row">
-        <label for="node-input-fritzip"><i class="icon-bookmark"></i>IP</label>
-        <input type="text" id="node-input-fritzip"/>
-    </div>
-    <div class="form-row">
-        <label for="node-input-username"><i class="icon-bookmark"></i>User (opt.)</label>
-        <input type="text" id="node-input-username"/>
-    </div>
-    <div class="form-row">
-        <label for="node-input-password"><i class="icon-bookmark"></i>Pass</label>
-        <input type="password" id="node-input-password" />
     </div>
     <div class="form-row">
         <label for="node-input-aid"><i class="icon-bookmark"></i>AID (opt.)</label>
