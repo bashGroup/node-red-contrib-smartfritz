@@ -3,11 +3,10 @@
     category: "config",
     defaults: {
       name: {value:"", required: false},
-      debug: {value:false, required: true},
-      fritzip: {value:"111.111.111.111", required: true}
+      fritzip: {value:"192.168.178.1", required: true}
     },
     credentials: {
-      username: {type: "text"},
+      username: {type: "text", value: "admin"},
       password: {type: "password"}
     },
     label: function() {
@@ -27,17 +26,12 @@
         <input type="text" id="node-config-input-fritzip" />
     </div>
     <div class="form-row">
-        <label for="node-config-input-username"><i class="icon-bookmark"></i>Username</label>
+        <label for="node-config-input-username"><i class="icon-bookmark"></i>User (opt.)</label>
         <input type="text" id="node-config-input-username" />
     </div>
     <div class="form-row">
         <label for="node-config-input-password"><i class="icon-bookmark"></i>Password</label>
         <input type="password" id="node-config-input-password" />
-    </div>
-    <div class="form-row">
-      <label>&nbsp;</label>
-      <input type="checkbox" id="node-config-input-debug" placeholder="" style="display: inline-block; width: auto; vertical-align: top;">
-      <label for="node-config-input-debug" style="width: 70%;">Debug mode</label>
     </div>
 </script>
 
