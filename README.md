@@ -1,4 +1,4 @@
-# Update 0.1.0
+# Update 0.1.1
 This is the first official version of this package. Please make sure to give some critical feedback. :)
 
 # SmartFritz for Node-RED
