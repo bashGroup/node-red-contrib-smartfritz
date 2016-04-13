@@ -6,12 +6,18 @@
       fritzip: {value:"192.168.178.1", required: true}
     },
     credentials: {
-      username: {type: "text", value: "admin"},
+      username: {type: "text"},
       password: {type: "password"}
     },
     label: function() {
       // ist das hier so in Ordnung?????
       return this.name ? this.name : "Smartfritz Config";
+    },
+    oneditprepare:function() {
+      if(!$('#node-config-input-username').val())
+      {
+        $('#node-config-input-username').val('admin');
+      }
     }
   });
 </script>
@@ -42,8 +48,7 @@
     defaults: {
       config: {type:"smartfritz-config", required:true},
       name: {value:"", required: false},
-      aid : {value:"0", required: false},
-      switchstate : {value:"NaN", required:true}
+      aid : {value:"0", required: false}
     },
     inputs:1,
     outputs:1,
@@ -84,10 +89,6 @@
     <div class="form-row">
         <label for="node-input-aid"><i class="icon-bookmark"></i>AID (opt.)</label>
         <input type="text" id="node-input-aid"/>
-    </div>
-    <div class="form-row">
-        <label for="node-input-switchstate"><i class="icon-bookmark"></i>SwitchState (opt.)</label>
-        <input type="text" id="node-input-switchstate"/>
     </div>
 </script>
 

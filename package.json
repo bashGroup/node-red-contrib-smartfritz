@@ -17,7 +17,9 @@
     "node-red",
     "smartfritz",
     "Dect!200",
-    "Fritz!Box"
+    "Fritz!Box",
+    "fritzbox",
+    "fritz"
   ],
   "node-red": {
     "nodes": {

@@ -6,50 +6,36 @@ module.exports = function(RED) {
     RED.nodes.createNode(this, n);
     var node = this;
     node.fritzip = n.fritzip;
-    node.username = this.credentials.username;
-    node.password = this.credentials.password;
     node.sid = null;
     var sessionID;
 
     try {
-      node.log('Init SmartfritzConfigNode.')
-      if (!node.username) {
-        node.log('Replaced empty username with default.')
-        node.username = 'admin';
+      node.log('Init SmartfritzConfigNode.');
+      if (!node.credentials.username) {
+        node.error('Empty username.');
+        return;
       }
-      node.log('Username: ' + node.username)
+      node.log('Username: ' + node.credentials.username);
 
-      fritz.getSessionID(node.username, node.password, function(sessionID) {
-        node.log('Session ID: ' + sessionID);
-        if ((!sessionID) || (sessionID == '0000000000000000')) {
-          node.error('Error logging in to Fritz IP: ' + node.fritzip +
-            '. \nWrong password?');
-          node.status({
-            fill: "red",
-            shape: "ring",
-            text: "Error"
-          });
-          return;
-        }
-        node.sid = sessionID;
-      }, {
-        url: node.fritzip
-      });
+      fritz.getSessionID(node.credentials.username, node.credentials.password,
+        function(sessionID) {
+          node.log('Session ID: ' + sessionID);
+          if ((!sessionID) || (sessionID == '0000000000000000')) {
+            node.error('Error logging in to Fritz IP: ' + node.fritzip +
+              '. \nWrong password?');
+            return;
+          }
+          node.sid = sessionID;
+        }, {
+          url: node.fritzip
+        });
 
     } catch (err) {
-      var errText = 'Error while Fritz config. '
-      if (err == 'Error: Invalid password') {
-        errText += 'Wrong IP (' + node.fritzip +
-          ') or Password.'
-      }
-      node.status({
-        fill: "red",
-        shape: "ring",
-        text: "Error"
-      });
-      node.error(errText);
+      node.error(err + ' IP (' + node.fritzip + ').');
+      return;
     }
   }
+
   RED.nodes.registerType("smartfritz-config", SmartfritzConfigNode, {
     credentials: {
       username: {
@@ -68,15 +54,14 @@ module.exports = function(RED) {
   function FritzWriteNode(n) {
     RED.nodes.createNode(this, n);
     var node = this;
-
     node.config = RED.nodes.getNode(n.config);
+
     if (!node.config) {
-      node.error("Config node missing");
-      node.log('node.config:' + JSON.stringify(node.config));
+      node.error("Config node missing.");
       node.status({
         fill: "red",
         shape: "ring",
-        text: "Error"
+        text: "Error. Config node missing."
       });
       return;
     }
@@ -85,22 +70,22 @@ module.exports = function(RED) {
     var actorID;
 
     node.on('input', function(msg) {
-      node.log('FritzWriteNode called')
-      sessionID = node.config.sid
+      node.log('FritzWriteNode called');
+      sessionID = node.config.sid;
 
       if (!sessionID) {
-        node.error('Error no session established.');
+        node.error('No session established.');
         node.status({
           fill: "red",
           shape: "ring",
-          text: "Error"
+          text: "Error. No session established."
         });
         return;
       }
       try {
         fritz.getSwitchList(sessionID, function(actorID) {
           if (node.config.aid) {
-            node.log('Using configured AID.')
+            node.log('Using configured AID.');
             actorID = node.config.aid;
           }
 
@@ -110,97 +95,69 @@ module.exports = function(RED) {
             node.status({
               fill: "red",
               shape: "ring",
-              text: "Error"
+              text: "Error. No Switch found, Fritz IP (" + node.config
+                .fritzip + ")"
             });
             return;
           }
-          node.log('AID: ' + actorID)
+          node.log('AID: ' + actorID);
+          node.log('Write SwitchState to:' + msg.payload);
 
-          var tempSwitchState = node.switchstate;
-          if (tempSwitchState === 'NaN' || 'msg.payload') {
-            node.log('Will take msg.payload as SwitchState');
-            tempSwitchState = msg.payload;
+
+          function retSwitchOnOff(funRet) {
+            if (funRet === '') {
+              node.error(
+                'Error writing Switch. Fritz IP (' +
+                node.config.fritzip +
+                ')');
+              node.status({
+                fill: "red",
+                shape: "ring",
+                text: "Error writing Switch. Fritz IP (" +
+                  node.config.fritzip +
+                  ")"
+              });
+              return;
+            }
+
+            msg.payload = {
+              sessionId: sessionID,
+              actorID: actorID,
+              switchState: funRet
+            };
+            node.status({
+              fill: "green",
+              shape: "dot",
+              text: "OK"
+            });
+            node.send(msg);
           }
-
-          node.log('Write SwitchState to:' + tempSwitchState)
 
           if (
-            (tempSwitchState == 'true') || (tempSwitchState == '1') ||
-            (tempSwitchState == 1)
+            (msg.payload === 'true') || (msg.payload === '1') ||
+            (msg.payload === 1) || (msg.payload === true)
           ) {
             node.log('SwitchOn Switch AID: ' + actorID);
-            fritz.setSwitchOn(sessionID, actorID, function(
-              funRet) {
-              if (funRet === '') {
-                node.error(
-                  'Error writing SwitchOn. Fritz IP (' +
-                  node.config.fritzip +
-                  ')');
-                node.status({
-                  fill: "red",
-                  shape: "ring",
-                  text: "Error"
-                });
-                return;
-              }
-
-              msg.payload = {
-                sessionId: sessionID,
-                actorID: actorID,
-                switchState: funRet
-              };
-              node.status({
-                fill: "green",
-                shape: "dot",
-                text: "OK"
-              });
-              node.send(msg);
-            });
+            fritz.setSwitchOn(sessionID, actorID, retSwitchOnOff);
           } else if (
-            (tempSwitchState == 'false') || (tempSwitchState == '0') ||
-            (tempSwitchState == 0)
+            (msg.payload === 'false') || (msg.payload === '0') ||
+            (msg.payload === 0) || (msg.payload === false)
           ) {
-            fritz.setSwitchOff(sessionID, actorID, function(
-              funRet) {
-              if (funRet === '') {
-                node.error(
-                  'Error writing SwitchOff. Fritz IP (' +
-                  node.config.fritzip +
-                  ')');
-                node.status({
-                  fill: "red",
-                  shape: "ring",
-                  text: "Error"
-                });
-                return;
-              }
-
-              msg.payload = {
-                sessionId: sessionID,
-                actorID: actorID,
-                switchState: funRet
-              };
-              node.status({
-                fill: "green",
-                shape: "dot",
-                text: "OK"
-              });
-              node.send(msg);
-            });
+            node.log('SwitchOff Switch AID: ' + actorID);
+            fritz.setSwitchOff(sessionID, actorID, retSwitchOnOff);
           } else {
             node.error('Error interpreting SwitchState: ' +
-              tempSwitchState);
+              msg.payload);
           }
 
-        })
+        });
       } catch (err) {
         node.error('Error: ' + err);
         node.status({
           fill: "red",
           shape: "ring",
-          text: "Error"
+          text: "Error" + err
         });
-
       }
     });
   }
@@ -212,17 +169,16 @@ module.exports = function(RED) {
    * READ node
    * -------------------------------------------------------------------------*/
   function FritzReadNode(n) {
-    RED.nodes.createNode(this, n)
+    RED.nodes.createNode(this, n);
     var node = this;
-
     node.config = RED.nodes.getNode(n.config);
+
     if (!node.config) {
       node.error("Config node missing");
-      node.log('node.config:' + JSON.stringify(node.config));
       node.status({
         fill: "red",
         shape: "ring",
-        text: "Error"
+        text: "Error. Config node missing"
       });
       return;
     }
@@ -231,15 +187,15 @@ module.exports = function(RED) {
     var actorID;
 
     node.on('input', function(msg) {
-      node.log('FritzReadNode called')
-      sessionID = node.config.sid
+      node.log('FritzReadNode called');
+      sessionID = node.config.sid;
 
       if (!sessionID) {
         node.error('Error no session established.');
         node.status({
           fill: "red",
           shape: "ring",
-          text: "Error"
+          text: "Error. No session established."
         });
         return;
       }
@@ -247,7 +203,7 @@ module.exports = function(RED) {
       try {
         fritz.getSwitchList(sessionID, function(actorID) {
           if (node.config.aid) {
-            node.log('Using configured AID.')
+            node.log('Using configured AID.');
             actorID = node.config.aid;
           }
 
@@ -257,11 +213,12 @@ module.exports = function(RED) {
             node.status({
               fill: "red",
               shape: "ring",
-              text: "Error"
+              text: "Error. No Switch found, Fritz IP (" + node
+                .config.fritzip + ")"
             });
             return;
           }
-          node.log('AID: ' + actorID)
+          node.log('AID: ' + actorID);
 
           fritz.getSwitchEnergy(sessionID, actorID, function(
             switchEnergy) {
@@ -287,32 +244,32 @@ module.exports = function(RED) {
                     ) {
                       node.error(
                         'Switch not ready (yet).'
-                      )
+                      );
                       node.log('msg.payload: ' + JSON.stringify(
-                        msg.payload))
+                        msg.payload));
                       node.status({
                         fill: "red",
                         shape: "ring",
-                        text: "Error"
+                        text: "Error. Switch not ready (yet)."
                       });
-                      return
+                      return;
                     }
                     if (
-                      (switchEnergy == 'inval') || (
-                        switchPower == 'inval') || (
-                        switchState == 'inval')
+                      (switchEnergy === 'inval') ||
+                      (switchPower === 'inval') ||
+                      (switchState === 'inval')
                     ) {
                       node.error(
                         'Error Switch values invalid.'
-                      )
+                      );
                       node.log('msg.payload: ' + JSON.stringify(
-                        msg.payload))
+                        msg.payload));
                       node.status({
                         fill: "red",
                         shape: "ring",
-                        text: "Error"
+                        text: "Error. Switch values invalid."
                       });
-                      return
+                      return;
                     }
 
                     node.status({
@@ -321,26 +278,20 @@ module.exports = function(RED) {
                       text: "OK"
                     });
                     node.send(msg);
-                  })
-              })
-          })
-        })
+                  });
+              });
+          });
+        });
       } catch (err) {
-        var errText = 'Error while Fritz read. '
-        if (err == 'Error: Invalid password') {
-          errText += 'Wrong IP (' + node.config.fritzip +
-            ') or Password.'
-        }
-        node.error(errText);
+        node.error('Error: ' + err);
         node.status({
           fill: "red",
           shape: "ring",
-          text: "Error"
+          text: "Error" + err
         });
-        return;
       }
-    })
+    });
   }
 
   RED.nodes.registerType('fritz read', FritzReadNode);
-}
+};
