@@ -1,8 +1,6 @@
-# Update 0.1.1
-This is the first official version of this package. Please make sure to give some critical feedback. :)
-
 # SmartFritz for Node-RED
 Easily integrate AVM Fritz!Dect 200 switches into your node-RED flow. Based on the SmartFritz library.
+Please make sure to give some critical feedback. :)
 
 ## Installation
 Use `npm install node-red-contrib-smartfritz` to install.
