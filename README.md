@@ -1,5 +1,5 @@
 # SmartFritz for Node-RED
-Easily integrate AVM Fritz!Dect 200 switches into your node-RED flow. Based on the SmartFritz library.
+Easily integrate AVM Fritz!Dect 200 switches into your node-RED flow. Based on the smartfritz-promise library.
 Please make sure to give some critical feedback. :)
 
 ## Installation
