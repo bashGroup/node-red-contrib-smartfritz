@@ -1,4 +1,4 @@
-var fritz = require('smartfritz');
+var fritz = require('smartfritz-promise');
 
 module.exports = function(RED) {
 
