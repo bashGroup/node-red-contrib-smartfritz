@@ -9,17 +9,11 @@ module.exports = function(RED) {
     node.sid = null;
     var sessionID;
 
-    try {
-      node.log('Init SmartfritzConfigNode.');
-      if (!node.credentials.username) {
-        node.error('Empty username.');
-        return;
-      }
-      node.log('Username: ' + node.credentials.username);
-
+    node.refreshSessionId = function(){
+      node.log('Triggerd session ID refresh');
       fritz.getSessionID(node.credentials.username, node.credentials.password,
         function(sessionID) {
-          node.log('Session ID: ' + sessionID);
+          node.log('New session ID: ' + sessionID);
           if ((!sessionID) || (sessionID == '0000000000000000')) {
             node.error('Error logging in to Fritz IP: ' + node.fritzip +
               '. \nWrong password?');
@@ -27,9 +21,19 @@ module.exports = function(RED) {
           }
           node.sid = sessionID;
         }, {
-          url: node.fritzip
-        });
+        url: node.fritzip
+      });
+    }
 
+    try {
+      node.log('Init SmartfritzConfigNode.');
+      if (!node.credentials.username) {
+        node.error('Empty username.');
+        return;
+      }
+      node.log('Username: ' + node.credentials.username);
+      node.refreshSessionId();
+      setInterval(node.refreshSessionId, 1800000); //30min
     } catch (err) {
       node.error(err + ' IP (' + node.fritzip + ').');
       return;
