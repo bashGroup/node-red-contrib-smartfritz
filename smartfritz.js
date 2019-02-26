@@ -1,4 +1,4 @@
-var fritz = require('smartfritz-promise');
+var fritz = require('fritzapi');
 
 module.exports = function(RED) {
 
@@ -229,14 +229,15 @@ module.exports = function(RED) {
 
                 fritz.getSwitchState(sessionID, actorID,
                   function(switchState) {
-
+                  fritz.getTemperature(sessionID, actorID, function(temperature) {
 
                     msg.payload = {
                       sessionID: sessionID,
                       actorID: actorID,
                       switchState: switchState,
                       switchEnergy: switchEnergy,
-                      switchPower: switchPower
+                      switchPower: switchPower,
+                      temperature: temperature
                     };
 
                     if (switchState ==
@@ -257,7 +258,8 @@ module.exports = function(RED) {
                     if (
                       (switchEnergy === 'inval') ||
                       (switchPower === 'inval') ||
-                      (switchState === 'inval')
+                      (switchState === 'inval') ||
+                      (temperature === 'inval')
                     ) {
                       node.error(
                         'Error Switch values invalid.'
@@ -279,6 +281,7 @@ module.exports = function(RED) {
                     });
                     node.send(msg);
                   });
+                });
               });
           });
         });
